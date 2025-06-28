@@ -119,4 +119,63 @@
         start: e.date,
         allDay: true
       })),
-      dateClick
+      dateClick: function(info) {
+        if (!isAdmin) {
+          const dayEvents = events.filter(e => e.date === info.dateStr);
+          if (dayEvents.length === 0) {
+            alert(info.dateStr + ' 沒有安排任何行程。');
+          } else {
+            const details = dayEvents.map(e => `${e.start} - ${e.end} ${e.title}`).join('\\n');
+            alert(info.dateStr + ' 行程如下：\\n' + details);
+          }
+          return;
+        }
+
+        const title = prompt(\"輸入活動名稱：\");
+        if (!title) return;
+        const start = prompt(\"開始時間 (例如 09:00)：\");
+        const end = prompt(\"結束時間 (例如 10:00)：\");
+        if (!start || !end) return;
+
+        const newEvent = { title, start, end, date: info.dateStr };
+        events.push(newEvent);
+        saveEvents();
+
+        calendar.addEvent({
+          title: `${start}-${end} ${title}`,
+          start: info.dateStr,
+          allDay: true
+        });
+
+        renderTodaySchedule(); // 更新今日行程
+      },
+      eventClick: function(info) {
+        if (!isAdmin) return;
+        const confirmDelete = confirm(\"是否要刪除此行程？\\n\" + info.event.title);
+        if (confirmDelete) {
+          const index = events.findIndex(e => `${e.start}-${e.end} ${e.title}` === info.event.title && e.date === info.event.startStr);
+          if (index > -1) events.splice(index, 1);
+          info.event.remove();
+          saveEvents();
+          renderTodaySchedule();
+        }
+      },
+    });
+
+    calendar.render();
+    renderTodaySchedule();
+
+    loginBtn.addEventListener('click', () => {
+      const password = prompt(\"請輸入管理者密碼：\");
+      if (password === \"wor2025\") {
+        isAdmin = true;
+        alert(\"登入成功，您現在可以新增與刪除行程。\"");
+      } else {
+        alert(\"密碼錯誤。\");
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
