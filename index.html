@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>行事曆（管理者限定）</title>
+  <title>KSS 4F</title>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
   <style>
     body {
@@ -36,17 +36,32 @@
     #loginBtn:hover {
       background-color: #0056b3;
     }
+    #todaySchedule {
+      background: #fff;
+      padding: 10px 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+    }
     @media (max-width: 600px) {
-      #calendar {
-        padding: 5px;
+      #calendar, #todaySchedule {
+        padding: 10px;
       }
     }
   </style>
 </head>
 <body>
 
-<h1>我的行事曆</h1>
+<h1>KSS 4F</h1>
 <button id="loginBtn">🔐 管理者登入</button>
+
+<div id="todaySchedule">
+  <h2>📅 今日行程</h2>
+  <ul id="todayList">
+    <li>載入中...</li>
+  </ul>
+</div>
+
 <div id="calendar"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
@@ -54,9 +69,9 @@
   let isAdmin = false;
   const calendarEl = document.getElementById('calendar');
   const loginBtn = document.getElementById('loginBtn');
+  const todayList = document.getElementById('todayList');
   let events = [];
 
-  // 讀取 localStorage 中的行程
   const saved = localStorage.getItem('myCalendarEvents');
   if (saved) {
     try {
@@ -68,6 +83,23 @@
 
   function saveEvents() {
     localStorage.setItem('myCalendarEvents', JSON.stringify(events));
+  }
+
+  function renderTodaySchedule() {
+    const today = new Date().toISOString().split("T")[0];
+    const todays = events.filter(e => e.date === today);
+    todayList.innerHTML = '';
+
+    if (todays.length === 0) {
+      todayList.innerHTML = '<li>今天沒有行程</li>';
+    } else {
+      const sorted = todays.sort((a, b) => a.start.localeCompare(b.start));
+      for (const ev of sorted) {
+        const li = document.createElement('li');
+        li.textContent = `${ev.start}-${ev.end} ${ev.title}`;
+        todayList.appendChild(li);
+      }
+    }
   }
 
   const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -110,8 +142,35 @@
         start: info.dateStr,
         allDay: true
       });
+
+      renderTodaySchedule(); // 更新今日行程
     },
     eventClick: function(info) {
       if (!isAdmin) return;
       const confirmDelete = confirm("是否要刪除此行程？\n" + info.event.title);
-      if (conf
+      if (confirmDelete) {
+        const index = events.findIndex(e => `${e.start}-${e.end} ${e.title}` === info.event.title && e.date === info.event.startStr);
+        if (index > -1) events.splice(index, 1);
+        info.event.remove();
+        saveEvents();
+        renderTodaySchedule();
+      }
+    },
+  });
+
+  calendar.render();
+  renderTodaySchedule();
+
+  loginBtn.addEventListener('click', () => {
+    const password = prompt("請輸入管理者密碼：");
+    if (password === "worship2025") {
+      isAdmin = true;
+      alert("登入成功，您現在可以新增與刪除行程。");
+    } else {
+      alert("密碼錯誤。");
+    }
+  });
+</script>
+
+</body>
+</html>
