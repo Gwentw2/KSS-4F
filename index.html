@@ -64,114 +64,59 @@
 
 <div id="calendar"></div>
 
+<!-- JS 載入順序非常重要 -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales-all.min.js"></script>
+
 <script>
-  let isAdmin = false;
-  const calendarEl = document.getElementById('calendar');
-  const loginBtn = document.getElementById('loginBtn');
-  const todayList = document.getElementById('todayList');
-  let events = [];
+  document.addEventListener('DOMContentLoaded', function () {
+    let isAdmin = false;
+    const calendarEl = document.getElementById('calendar');
+    const loginBtn = document.getElementById('loginBtn');
+    const todayList = document.getElementById('todayList');
+    let events = [];
 
-  const saved = localStorage.getItem('myCalendarEvents');
-  if (saved) {
-    try {
-      events = JSON.parse(saved);
-    } catch (e) {
-      events = [];
-    }
-  }
-
-  function saveEvents() {
-    localStorage.setItem('myCalendarEvents', JSON.stringify(events));
-  }
-
-  function renderTodaySchedule() {
-    const today = new Date().toISOString().split("T")[0];
-    const todays = events.filter(e => e.date === today);
-    todayList.innerHTML = '';
-
-    if (todays.length === 0) {
-      todayList.innerHTML = '<li>今天沒有行程</li>';
-    } else {
-      const sorted = todays.sort((a, b) => a.start.localeCompare(b.start));
-      for (const ev of sorted) {
-        const li = document.createElement('li');
-        li.textContent = `${ev.start}-${ev.end} ${ev.title}`;
-        todayList.appendChild(li);
+    const saved = localStorage.getItem('myCalendarEvents');
+    if (saved) {
+      try {
+        events = JSON.parse(saved);
+      } catch (e) {
+        events = [];
       }
     }
-  }
 
-  const calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'dayGridMonth',
-    locale: 'zh-tw',
-    headerToolbar: {
-      left: 'prev,next today',
-      center: 'title',
-      right: ''
-    },
-    events: events.map(e => ({
-      title: `${e.start}-${e.end} ${e.title}`,
-      start: e.date,
-      allDay: true
-    })),
-    dateClick: function(info) {
-      if (!isAdmin) {
-        const dayEvents = events.filter(e => e.date === info.dateStr);
-        if (dayEvents.length === 0) {
-          alert(info.dateStr + ' 沒有安排任何行程。');
-        } else {
-          const details = dayEvents.map(e => `${e.start} - ${e.end} ${e.title}`).join('\n');
-          alert(info.dateStr + ' 行程如下：\n' + details);
+    function saveEvents() {
+      localStorage.setItem('myCalendarEvents', JSON.stringify(events));
+    }
+
+    function renderTodaySchedule() {
+      const today = new Date().toISOString().split("T")[0];
+      const todays = events.filter(e => e.date === today);
+      todayList.innerHTML = '';
+
+      if (todays.length === 0) {
+        todayList.innerHTML = '<li>今天沒有行程</li>';
+      } else {
+        const sorted = todays.sort((a, b) => a.start.localeCompare(b.start));
+        for (const ev of sorted) {
+          const li = document.createElement('li');
+          li.textContent = `${ev.start}-${ev.end} ${ev.title}`;
+          todayList.appendChild(li);
         }
-        return;
       }
-
-      const title = prompt("輸入活動名稱：");
-      if (!title) return;
-      const start = prompt("開始時間 (例如 09:00)：");
-      const end = prompt("結束時間 (例如 10:00)：");
-      if (!start || !end) return;
-
-      const newEvent = { title, start, end, date: info.dateStr };
-      events.push(newEvent);
-      saveEvents();
-
-      calendar.addEvent({
-        title: `${start}-${end} ${title}`,
-        start: info.dateStr,
-        allDay: true
-      });
-
-      renderTodaySchedule(); // 更新今日行程
-    },
-    eventClick: function(info) {
-      if (!isAdmin) return;
-      const confirmDelete = confirm("是否要刪除此行程？\n" + info.event.title);
-      if (confirmDelete) {
-        const index = events.findIndex(e => `${e.start}-${e.end} ${e.title}` === info.event.title && e.date === info.event.startStr);
-        if (index > -1) events.splice(index, 1);
-        info.event.remove();
-        saveEvents();
-        renderTodaySchedule();
-      }
-    },
-  });
-
-  calendar.render();
-  renderTodaySchedule();
-
-  loginBtn.addEventListener('click', () => {
-    const password = prompt("請輸入管理者密碼：");
-    if (password === "wor2025") {
-      isAdmin = true;
-      alert("登入成功，您現在可以新增與刪除行程。");
-    } else {
-      alert("密碼錯誤。");
     }
-  });
-</script>
 
-</body>
-</html>
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      locale: 'zh-tw',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: ''
+      },
+      events: events.map(e => ({
+        title: `${e.start}-${e.end} ${e.title}`,
+        start: e.date,
+        allDay: true
+      })),
+      dateClick
