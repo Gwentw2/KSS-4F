@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>行事曆（管理者限定）</title>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      padding: 20px;
+      margin: auto;
+      max-width: 900px;
+      background-color: #f4f6f8;
+    }
+    #calendar {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    #loginBtn {
+      margin: 10px 0 20px;
+      padding: 8px 16px;
+      font-size: 1em;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #loginBtn:hover {
+      background-color: #0056b3;
+    }
+    @media (max-width: 600px) {
+      #calendar {
+        padding: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>我的行事曆</h1>
+<button id="loginBtn">🔐 管理者登入</button>
+<div id="calendar"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+<script>
+  let isAdmin = false;
+  const calendarEl = document.getElementById('calendar');
+  const loginBtn = document.getElementById('loginBtn');
+  let events = [];
+
+  // 讀取 localStorage 中的行程
+  const saved = localStorage.getItem('myCalendarEvents');
+  if (saved) {
+    try {
+      events = JSON.parse(saved);
+    } catch (e) {
+      events = [];
+    }
+  }
+
+  function saveEvents() {
+    localStorage.setItem('myCalendarEvents', JSON.stringify(events));
+  }
+
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    locale: 'zh-tw',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: ''
+    },
+    events: events.map(e => ({
+      title: `${e.start}-${e.end} ${e.title}`,
+      start: e.date,
+      allDay: true
+    })),
+    dateClick: function(info) {
+      if (!isAdmin) {
+        const dayEvents = events.filter(e => e.date === info.dateStr);
+        if (dayEvents.length === 0) {
+          alert(info.dateStr + ' 沒有安排任何行程。');
+        } else {
+          const details = dayEvents.map(e => `${e.start} - ${e.end} ${e.title}`).join('\n');
+          alert(info.dateStr + ' 行程如下：\n' + details);
+        }
+        return;
+      }
+
+      const title = prompt("輸入活動名稱：");
+      if (!title) return;
+      const start = prompt("開始時間 (例如 09:00)：");
+      const end = prompt("結束時間 (例如 10:00)：");
+      if (!start || !end) return;
+
+      const newEvent = { title, start, end, date: info.dateStr };
+      events.push(newEvent);
+      saveEvents();
+
+      calendar.addEvent({
+        title: `${start}-${end} ${title}`,
+        start: info.dateStr,
+        allDay: true
+      });
+    },
+    eventClick: function(info) {
+      if (!isAdmin) return;
+      const confirmDelete = confirm("是否要刪除此行程？\n" + info.event.title);
+      if (conf
