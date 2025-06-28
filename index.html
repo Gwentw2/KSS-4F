@@ -70,6 +70,15 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+  try {
+    alert('JS 已經載入並啟動'); // 確認有啟動
+    // ... 其餘原始內容 ...
+  } catch (e) {
+    alert('初始化時發生錯誤：' + e.message);
+    console.error(e);
+  }
+});
+  document.addEventListener('DOMContentLoaded', function () {
     let isAdmin = false;
     const calendarEl = document.getElementById('calendar');
     const loginBtn = document.getElementById('loginBtn');
@@ -169,7 +178,7 @@
       const password = prompt(\"請輸入管理者密碼：\");
       if (password === \"wor2025\") {
         isAdmin = true;
-        alert(\"登入成功，您現在可以新增與刪除行程。\"");
+        alert("登入成功，您現在可以新增與刪除行程。");
       } else {
         alert(\"密碼錯誤。\");
       }
