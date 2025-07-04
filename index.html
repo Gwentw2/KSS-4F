@@ -2,14 +2,11 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>4F 主堂</title>
+  <title>KSS 4F</title>
   <style>
     body {
-      font-family: 'Microsoft JhengHei', 'DFKai-SB', 'PMingLiU', sans-serif;
-      font-family: "DFKai-SB", "Yu Gothic UI", "MingLiU", "cursive";
-      font-family: "Microsoft JhengHei", "Noto Sans TC", "sans-serif";
+      font-family: "DFKai-SB", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
       background-color: #ffeef0;
-      font-family: "DFKai-SB", "Gen Jyuu Gothic", "sans-serif";
     }
 
     h1 {
@@ -87,15 +84,15 @@
     <h3>新增 / 編輯 排程</h3>
     <input type="date" id="form-date" />
     <select id="form-time">
-    <option value="">-- 請選擇時間 --</option>
-    <option value="08:00">08:00</option>
-    <option value="09:30">09:30</option>
-    <option value="10:30">10:30</option>
-    <option value="12:30">12:30</option>
-    <option value="14:00">14:00</option>
-    <option value="15:30">15:30</option>
-    <option value="17:00">17:00</option>
-  </select>
+      <option value="">-- 請選擇時間 --</option>
+      <option value="08:00">08:00</option>
+      <option value="09:30">09:30</option>
+      <option value="10:30">10:30</option>
+      <option value="12:30">12:30</option>
+      <option value="14:00">14:00</option>
+      <option value="15:30">15:30</option>
+      <option value="17:00">17:00</option>
+    </select>
     <input type="text" id="form-person" placeholder="聯絡人" />
     <button onclick="addSchedule()">新增排程</button>
     <button onclick="logout()">登出</button>
