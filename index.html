@@ -171,7 +171,6 @@
         row.innerHTML = `
           <td>${filtered[i].date}</td>
           <td>${filtered[i].time}</td>
-          <td>${filtered[i].slot}</td>
           <td>${filtered[i].person}</td>
           ${
             isAdmin
@@ -191,17 +190,16 @@
       const date = document.getElementById('form-date').value;
       const start = document.getElementById('form-start').value;
       const end = document.getElementById('form-end').value;
-      const slot = document.getElementById('form-slot').value;
       const person = document.getElementById('form-person').value;
 
-      if (!date || !start || !end || !slot || !person) {
+      if (!date || !start || !end || !person) {
         alert('請填寫所有欄位');
         return;
       }
 
       const time = `${start} ～ ${end}`;
       const data = JSON.parse(localStorage.getItem('schedules') || '[]');
-      data.push({ date, time, slot, person });
+      data.push({ date, time, person });
       localStorage.setItem('schedules', JSON.stringify(data));
 
       loadSchedule();
