@@ -1,190 +1,191 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KSS 4F</title>
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>4F</title>
   <style>
     body {
-      font-family: "Microsoft JhengHei", sans-serif;
-      padding: 20px;
-      margin: auto;
-      max-width: 900px;
-      background-color: #f4f6f8;
+      font-family: 'Microsoft JhengHei', 'DFKai-SB', 'PMingLiU', sans-serif;
+      font-family: "DFKai-SB", "Yu Gothic UI", "MingLiU", "cursive";
+      font-family: "Microsoft JhengHei", "Noto Sans TC", "sans-serif";
+      background-color: #ffeef0;
+      font-family: "DFKai-SB", "Gen Jyuu Gothic", "sans-serif";
     }
-    #calendar {
-      background: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
+
     h1 {
       text-align: center;
-      color: #333;
     }
-    #loginBtn {
-      margin: 10px 0 20px;
-      padding: 8px 16px;
-      font-size: 1em;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+
+    table {
+      width: 90%;
+      margin: 1em auto;
+      border-collapse: collapse;
+      background: white;
     }
-    #loginBtn:hover {
-      background-color: #0056b3;
+
+    th, td {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: center;
     }
-    #todaySchedule {
-      background: #fff;
-      padding: 10px 15px;
-      border-radius: 6px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+
+    #login, #admin-panel {
+      width: 90%;
+      margin: 1em auto;
+      padding: 1em;
+      border: 1px solid #ccc;
+      background: white;
     }
-    @media (max-width: 600px) {
-      #calendar, #todaySchedule {
-        padding: 10px;
-      }
+
+    input, select, button {
+      margin: 4px;
+      padding: 5px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .btn {
+      padding: 5px 10px;
+    }
+
+    label {
+      margin-right: 5px;
     }
   </style>
 </head>
 <body>
+  <h1>4F</h1>
 
-<h1>KSS 4F</h1>
-<button id="loginBtn">🔐 管理者登入</button>
+  <div style="text-align:center">
+    <label for="datePicker">選擇日期：</label>
+    <input type="date" id="datePicker" />
+  </div>
 
-<div id="todaySchedule">
-  <h2>📅 今日行程</h2>
-  <ul id="todayList">
-    <li>載入中...</li>
-  </ul>
-</div>
+  <table>
+    <thead>
+      <tr>
+        <th>日期</th>
+        <th>時間</th>
+        <th>時段</th>
+        <th>聯絡人</th>
+        <th class="admin-only hidden">操作</th>
+      </tr>
+    </thead>
+    <tbody id="scheduleBody"></tbody>
+  </table>
 
-<div id="calendar"></div>
+  <div id="login">
+    <h3>管理員登入</h3>
+    <input type="text" id="adminName" placeholder="管理員帳號" />
+    <input type="password" id="adminPassword" placeholder="密碼" />
+    <button onclick="login()">登入</button>
+  </div>
 
-<!-- JS 載入順序非常重要 -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales-all.min.js"></script>
+  <div id="admin-panel" class="hidden">
+    <h3>新增 / 編輯 排程</h3>
+    <input type="date" id="form-date" />
+    <input type="time" id="form-time" step="600" />
+    <input type="text" id="form-slot" placeholder="時段（例如 上午）" />
+    <input type="text" id="form-person" placeholder="聯絡人" />
+    <button onclick="addSchedule()">新增排程</button>
+    <button onclick="logout()">登出</button>
+  </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-  try {
-    alert('JS 已經載入並啟動'); // 確認有啟動
-    // ... 其餘原始內容 ...
-  } catch (e) {
-    alert('初始化時發生錯誤：' + e.message);
-    console.error(e);
-  }
-});
-  document.addEventListener('DOMContentLoaded', function () {
+  <script>
+    const admins = {
+      admin1: 'pw1',
+      admin2: 'pw2',
+      admin3: 'pw3',
+    };
+
     let isAdmin = false;
-    const calendarEl = document.getElementById('calendar');
-    const loginBtn = document.getElementById('loginBtn');
-    const todayList = document.getElementById('todayList');
-    let events = [];
 
-    const saved = localStorage.getItem('myCalendarEvents');
-    if (saved) {
-      try {
-        events = JSON.parse(saved);
-      } catch (e) {
-        events = [];
-      }
-    }
+    const datePicker = document.getElementById('datePicker');
+    const scheduleBody = document.getElementById('scheduleBody');
 
-    function saveEvents() {
-      localStorage.setItem('myCalendarEvents', JSON.stringify(events));
-    }
+    function loadSchedule() {
+      const date = datePicker.value;
+      const data = JSON.parse(localStorage.getItem('schedules') || '[]');
+      scheduleBody.innerHTML = '';
 
-    function renderTodaySchedule() {
-      const today = new Date().toISOString().split("T")[0];
-      const todays = events.filter(e => e.date === today);
-      todayList.innerHTML = '';
-
-      if (todays.length === 0) {
-        todayList.innerHTML = '<li>今天沒有行程</li>';
-      } else {
-        const sorted = todays.sort((a, b) => a.start.localeCompare(b.start));
-        for (const ev of sorted) {
-          const li = document.createElement('li');
-          li.textContent = `${ev.start}-${ev.end} ${ev.title}`;
-          todayList.appendChild(li);
-        }
-      }
-    }
-
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      locale: 'zh-tw',
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: ''
-      },
-      events: events.map(e => ({
-        title: `${e.start}-${e.end} ${e.title}`,
-        start: e.date,
-        allDay: true
-      })),
-      dateClick: function(info) {
-        if (!isAdmin) {
-          const dayEvents = events.filter(e => e.date === info.dateStr);
-          if (dayEvents.length === 0) {
-            alert(info.dateStr + ' 沒有安排任何行程。');
-          } else {
-            const details = dayEvents.map(e => `${e.start} - ${e.end} ${e.title}`).join('\\n');
-            alert(info.dateStr + ' 行程如下：\\n' + details);
+      const filtered = data.filter(item => item.date === date);
+      for (let i = 0; i < filtered.length; i++) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${filtered[i].date}</td>
+          <td>${filtered[i].time}</td>
+          <td>${filtered[i].slot}</td>
+          <td>${filtered[i].person}</td>
+          ${
+            isAdmin
+              ? `<td><button onclick="deleteSchedule(${i})">刪除</button></td>`
+              : ''
           }
-          return;
-        }
-
-        const title = prompt(\"輸入活動名稱：\");
-        if (!title) return;
-        const start = prompt(\"開始時間 (例如 09:00)：\");
-        const end = prompt(\"結束時間 (例如 10:00)：\");
-        if (!start || !end) return;
-
-        const newEvent = { title, start, end, date: info.dateStr };
-        events.push(newEvent);
-        saveEvents();
-
-        calendar.addEvent({
-          title: `${start}-${end} ${title}`,
-          start: info.dateStr,
-          allDay: true
-        });
-
-        renderTodaySchedule(); // 更新今日行程
-      },
-      eventClick: function(info) {
-        if (!isAdmin) return;
-        const confirmDelete = confirm(\"是否要刪除此行程？\\n\" + info.event.title);
-        if (confirmDelete) {
-          const index = events.findIndex(e => `${e.start}-${e.end} ${e.title}` === info.event.title && e.date === info.event.startStr);
-          if (index > -1) events.splice(index, 1);
-          info.event.remove();
-          saveEvents();
-          renderTodaySchedule();
-        }
-      },
-    });
-
-    calendar.render();
-    renderTodaySchedule();
-
-    loginBtn.addEventListener('click', () => {
-      const password = prompt(\"請輸入管理者密碼：\");
-      if (password === \"wor2025\") {
-        isAdmin = true;
-        alert("登入成功，您現在可以新增與刪除行程。");
-      } else {
-        alert(\"密碼錯誤。\");
+        `;
+        scheduleBody.appendChild(row);
       }
-    });
-  });
-</script>
 
+      document.querySelectorAll('.admin-only').forEach(el => {
+        el.classList.toggle('hidden', !isAdmin);
+      });
+    }
+
+    function addSchedule() {
+      const date = document.getElementById('form-date').value;
+      const time = document.getElementById('form-time').value;
+      const slot = document.getElementById('form-slot').value;
+      const person = document.getElementById('form-person').value;
+
+      if (!date || !time || !slot || !person) {
+        alert('請填寫所有欄位');
+        return;
+      }
+
+      const data = JSON.parse(localStorage.getItem('schedules') || '[]');
+      data.push({ date, time, slot, person });
+      localStorage.setItem('schedules', JSON.stringify(data));
+
+      loadSchedule();
+    }
+
+    function deleteSchedule(index) {
+      const date = datePicker.value;
+      const data = JSON.parse(localStorage.getItem('schedules') || '[]');
+      const filtered = data.filter(item => item.date === date);
+      const item = filtered[index];
+
+      const newData = data.filter(d => !(d.date === item.date && d.time === item.time && d.person === item.person));
+      localStorage.setItem('schedules', JSON.stringify(newData));
+      loadSchedule();
+    }
+
+    function login() {
+      const name = document.getElementById('adminName').value;
+      const pw = document.getElementById('adminPassword').value;
+      if (admins[name] === pw) {
+        isAdmin = true;
+        document.getElementById('login').classList.add('hidden');
+        document.getElementById('admin-panel').classList.remove('hidden');
+        loadSchedule();
+      } else {
+        alert('登入失敗');
+      }
+    }
+
+    function logout() {
+      isAdmin = false;
+      document.getElementById('login').classList.remove('hidden');
+      document.getElementById('admin-panel').classList.add('hidden');
+      loadSchedule();
+    }
+
+    // 預設日期為今天
+    const today = new Date().toISOString().split('T')[0];
+    datePicker.value = today;
+    datePicker.addEventListener('change', loadSchedule);
+    loadSchedule();
+  </script>
 </body>
 </html>
