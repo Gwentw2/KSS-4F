@@ -83,8 +83,9 @@
   <div id="admin-panel" class="hidden">
     <h3>新增 / 編輯 排程</h3>
     <input type="date" id="form-date" />
-    <select id="form-time">
-      <option value="">-- 請選擇時間 --</option>
+    <label>開始時間：</label>
+    <select id="form-start">
+      <option value="">--</option>
       <option value="08:00">08:00</option>
       <option value="09:30">09:30</option>
       <option value="10:30">10:30</option>
@@ -93,6 +94,19 @@
       <option value="15:30">15:30</option>
       <option value="17:00">17:00</option>
     </select>
+    <label>結束時間：</label>
+    <select id="form-end">
+      <option value="">--</option>
+      <option value="08:00">08:00</option>
+      <option value="09:30">09:30</option>
+      <option value="10:30">10:30</option>
+      <option value="12:30">12:30</option>
+      <option value="14:00">14:00</option>
+      <option value="15:30">15:30</option>
+      <option value="17:00">17:00</option>
+    </select>
+    <br />
+    <input type="text" id="form-slot" placeholder="時段（例如 上午）" />
     <input type="text" id="form-person" placeholder="聯絡人" />
     <button onclick="addSchedule()">新增排程</button>
     <button onclick="logout()">登出</button>
@@ -139,15 +153,17 @@
 
     function addSchedule() {
       const date = document.getElementById('form-date').value;
-      const time = document.getElementById('form-time').value;
+      const start = document.getElementById('form-start').value;
+      const end = document.getElementById('form-end').value;
       const slot = document.getElementById('form-slot').value;
       const person = document.getElementById('form-person').value;
 
-      if (!date || !time || !slot || !person) {
+      if (!date || !start || !end || !slot || !person) {
         alert('請填寫所有欄位');
         return;
       }
 
+      const time = `${start} ～ ${end}`;
       const data = JSON.parse(localStorage.getItem('schedules') || '[]');
       data.push({ date, time, slot, person });
       localStorage.setItem('schedules', JSON.stringify(data));
@@ -186,7 +202,6 @@
       loadSchedule();
     }
 
-    // 預設日期為今天
     const today = new Date().toISOString().split('T')[0];
     datePicker.value = today;
     datePicker.addEventListener('change', loadSchedule);
